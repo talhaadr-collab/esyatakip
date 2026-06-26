@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Eşya Arşivi">
+<meta name="theme-color" content="#1a1a2e">
+<title>Eşya Arşivi</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f0f5;color:#1a1a1a;font-size:15px}
+#app{height:100%;display:flex;flex-direction:column}
+
+/* TOPBAR */
+.topbar{background:#1a1a2e;color:#fff;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:20}
+.topbar-logo{font-size:18px;font-weight:900;letter-spacing:2px;color:#f0c040}
+.topbar-sub{font-size:11px;opacity:.6;margin-top:1px}
+
+/* SCREENS */
+.screen{display:none;flex:1;overflow-y:auto;padding:14px;padding-bottom:80px}
+.screen.active{display:block}
+
+/* CARDS */
+.card{background:#fff;border-radius:14px;padding:15px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.card-title{font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}
+
+/* BUTTONS */
+.btn{width:100%;padding:13px;border-radius:12px;font-size:15px;font-weight:700;border:none;cursor:pointer;transition:transform .1s;margin-top:4px;font-family:inherit}
+.btn:active{transform:scale(.97)}
+.btn-dark{background:#1a1a2e;color:#f0c040}
+.btn-gold{background:#f0c040;color:#1a1a2e}
+.btn-red{background:#e53e3e;color:#fff}
+.btn-gray{background:#ebebeb;color:#444}
+.btn-green{background:#16a34a;color:#fff}
+.btn-sm{width:auto;padding:7px 14px;font-size:13px;border-radius:8px;margin-top:0;font-family:inherit}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* INPUTS */
+input,select,textarea{width:100%;padding:11px 13px;border:1.5px solid #e0e0e0;border-radius:10px;font-size:14px;background:#fff;color:#1a1a1a;outline:none;margin-bottom:10px;-webkit-appearance:none;font-family:inherit;resize:none}
+input:focus,select:focus,textarea:focus{border-color:#1a1a2e}
+label{font-size:12px;color:#888;display:block;margin-bottom:4px;font-weight:600}
+
+/* TABBAR */
+.tabbar{display:flex;background:#fff;border-top:1px solid #ebebeb;position:sticky;bottom:0;z-index:10;flex-shrink:0}
+.tabbar-btn{flex:1;padding:9px 2px 11px;border:none;background:transparent;font-size:9px;color:#bbb;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-family:inherit}
+.tabbar-btn.active{color:#1a1a2e;font-weight:700}
+.tabbar-btn .icon{font-size:20px}
+
+/* ARAMA & FİLTRE */
+.search-bar{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+.search-bar input{margin-bottom:0;flex:1}
+.search-bar select{margin-bottom:0;width:auto;min-width:110px;font-size:13px}
+
+/* EŞYA KARTI */
+.item-card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.07);display:flex;gap:12px;align-items:flex-start;cursor:pointer;transition:transform .1s}
+.item-card:active{transform:scale(.98)}
+.item-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.item-name{font-size:15px;font-weight:700;margin-bottom:2px}
+.item-room{display:inline-block;background:#f0f0f5;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;color:#666;margin-bottom:4px}
+.item-desc{font-size:12px;color:#aaa;line-height:1.4}
+.item-meta{font-size:11px;color:#ccc;margin-top:4px}
+
+/* ODA RENKLERİ */
+.room-salon   {background:#fef3c7;color:#92400e}
+.room-yatak   {background:#ede9fe;color:#5b21b6}
+.room-cocuk   {background:#d1fae5;color:#065f46}
+.room-mutfak  {background:#fee2e2;color:#991b1b}
+.room-banyo   {background:#dbeafe;color:#1e40af}
+.room-balkon  {background:#dcfce7;color:#166534}
+.room-depo    {background:#f3f4f6;color:#374151}
+.room-diger   {background:#fce7f3;color:#9d174d}
+
+/* BADGE */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+
+/* DETAY MODALı */
+#detail-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;align-items:flex-end;justify-content:center}
+#detail-modal.open{display:flex}
+.detail-box{background:#fff;border-radius:22px 22px 0 0;padding:22px;width:100%;max-width:520px;max-height:85vh;overflow-y:auto}
+
+/* CONFIRM */
+#confirm-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:flex-end;justify-content:center}
+#confirm-modal.open{display:flex}
+.confirm-box{background:#fff;border-radius:20px 20px 0 0;padding:22px;width:100%;max-width:480px}
+
+/* EKLE FORMU */
+.form-screen{padding-bottom:100px}
+
+/* HERO */
+.hero{background:#1a1a2e;border-radius:16px;padding:20px;text-align:center;margin-bottom:14px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 70% 20%,rgba(240,192,64,.15),transparent 60%)}
+.hero-title{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.hero-count{font-size:42px;font-weight:900;color:#f0c040}
+.hero-sub{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
+
+/* ODA ÖZET */
+.room-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.room-chip{background:#fff;border-radius:10px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,.07);display:flex;align-items:center;gap:8px;cursor:pointer}
+.room-chip-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.room-chip-name{font-size:13px;font-weight:600;flex:1}
+.room-chip-count{font-size:12px;color:#aaa;font-weight:600}
+
+/* ALERT */
+.alert{padding:10px 13px;border-radius:10px;font-size:13px;margin-bottom:10px;font-weight:500}
+.alert-red{background:#fee2e2;color:#991b1b}
+.alert-green{background:#dcfce7;color:#166534}
+
+.empty{text-align:center;color:#ccc;padding:32px 0;font-size:14px}
+.spinner{text-align:center;padding:40px;color:#aaa;font-size:14px}
+.sep{height:1px;background:#f0f0f0;margin:10px 0}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-logo">📦 EŞYA ARŞİVİ</div>
+      <div class="topbar-sub" id="topbar-sub">Yükleniyor...</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-sm btn btn-gold" onclick="switchTab(1)" style="padding:6px 12px;font-size:12px">+ Ekle</button>
+    </div>
+  </div>
+
+  <!-- EKRAN 1: ANA SAYFA -->
+  <div class="screen active" id="s-home">
+    <div class="hero">
+      <div class="hero-title">Toplam Kayıtlı Eşya</div>
+      <div class="hero-count" id="total-count">0</div>
+      <div class="hero-sub" id="last-added">Henüz eşya eklenmedi</div>
+    </div>
+
+    <div class="card-title" style="padding:0 2px;margin-bottom:8px">Odalara Göre</div>
+    <div class="room-summary" id="room-summary"></div>
+  </div>
+
+  <!-- EKRAN 2: EŞYALAR (arama + filtre) -->
+  <div class="screen" id="s-items">
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="🔍  Eşya ara..." oninput="renderItems()" style="font-size:14px">
+      <select id="room-filter" onchange="renderItems()">
+        <option value="">Tüm Odalar</option>
+      </select>
+    </div>
+    <div id="items-list"><div class="spinner">⏳ Yükleniyor...</div></div>
+  </div>
+
+  <!-- EKRAN 3: EKLE / DÜZENLE -->
+  <div class="screen form-screen" id="s-add">
+    <div class="card">
+      <div class="card-title" id="form-title">YENİ EŞYA EKLE</div>
+
+      <label>Eşya Adı *</label>
+      <input type="text" id="f-name" placeholder="ör. Kırmızı şemsiye" maxlength="60">
+
+      <label>Oda *</label>
+      <select id="f-room">
+        <option value="">Oda seçin...</option>
+        <option value="Salon">🛋️ Salon</option>
+        <option value="Yatak Odası">🛏️ Yatak Odası</option>
+        <option value="Çocuk Odası">🧸 Çocuk Odası</option>
+        <option value="Mutfak">🍳 Mutfak</option>
+        <option value="Banyo">🚿 Banyo</option>
+        <option value="Balkon">🌿 Balkon</option>
+        <option value="Depo / Kiler">📦 Depo / Kiler</option>
+        <option value="Diğer">📍 Diğer</option>
+      </select>
+
+      <label>Tam Konum <span style="color:#ccc;font-weight:400">(isteğe bağlı)</span></label>
+      <input type="text" id="f-location" placeholder="ör. Dolabın 2. rafı, TV altı çekmece" maxlength="100">
+
+      <label>Açıklama <span style="color:#ccc;font-weight:400">(isteğe bağlı)</span></label>
+      <textarea id="f-desc" rows="3" placeholder="Ek notlar..."></textarea>
+
+      <label>Emoji / İkon</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px" id="emoji-picker">
+      </div>
+      <input type="hidden" id="f-emoji" value="📦">
+
+      <div id="form-err" class="alert alert-red" style="display:none"></div>
+      <button class="btn btn-dark" onclick="saveItem()" id="save-btn">💾 Kaydet</button>
+      <button class="btn btn-gray" onclick="cancelForm()" id="cancel-btn">İptal</button>
+    </div>
+  </div>
+
+  <!-- TABBAR -->
+  <div class="tabbar">
+    <button class="tabbar-btn active" id="tb0" onclick="switchTab(0)"><span class="icon">🏠</span>Ana Sayfa</button>
+    <button class="tabbar-btn" id="tb1" onclick="switchTab(1)"><span class="icon">➕</span>Ekle</button>
+    <button class="tabbar-btn" id="tb2" onclick="switchTab(2)"><span class="icon">🔍</span>Eşyalar</button>
+  </div>
+
+  <!-- DETAY MODALı -->
+  <div id="detail-modal">
+    <div class="detail-box" id="detail-content"></div>
+  </div>
+
+  <!-- CONFIRM -->
+  <div id="confirm-modal">
+    <div class="confirm-box">
+      <div style="font-size:17px;font-weight:800;margin-bottom:6px" id="confirm-title"></div>
+      <div style="font-size:14px;color:#666;margin-bottom:18px" id="confirm-msg"></div>
+      <button class="btn btn-red" id="confirm-ok">Evet, sil</button>
+      <button class="btn btn-gray" onclick="closeConfirm()" style="margin-top:6px">İptal</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCftIZhWDfnImASyE_znXR17sYAKuTmrx4",
+  authDomain: "stok-takip-6b575.firebaseapp.com",
+  databaseURL: "https://stok-takip-6b575-default-rtdb.firebaseio.com",
+  projectId: "stok-takip-6b575",
+  storageBucket: "stok-takip-6b575.firebasestorage.app",
+  messagingSenderId: "68188579842",
+  appId: "1:68188579842:web:09d2699b5cc671ef11df1b"
+};
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.database();
+const itemsRef = db.ref('esyalar');
+
+// ── STATE ──────────────────────────────────────────────────
+let allItems   = {};   // { firebaseKey: itemObj }
+let currentTab = 0;
+let editKey    = null; // düzenleme modunda hangi key
+
+// ── EMOJILER ──────────────────────────────────────────────
+const EMOJIS = ['📦','👔','👗','👟','👜','🎒','🧥','👒','🕶️','⌚',
+  '💍','📱','💻','🖥️','📷','🎮','📺','🔑','🗝️','🔧',
+  '🪛','🔨','🧹','🧺','🪣','🛁','🪥','🧴','💊','📚',
+  '📁','🗂️','✂️','🖊️','🕯️','🏮','🪑','🛋️','🛏️','🪞',
+  '🌱','🌸','🍳','☕','🍽️','🥄','🔌','💡','🔦','🧲'];
+
+const ROOM_COLORS = {
+  'Salon':       {dot:'#f59e0b', cls:'room-salon'},
+  'Yatak Odası': {dot:'#8b5cf6', cls:'room-yatak'},
+  'Çocuk Odası': {dot:'#10b981', cls:'room-cocuk'},
+  'Mutfak':      {dot:'#ef4444', cls:'room-mutfak'},
+  'Banyo':       {dot:'#3b82f6', cls:'room-banyo'},
+  'Balkon':      {dot:'#22c55e', cls:'room-balkon'},
+  'Depo / Kiler':{dot:'#6b7280', cls:'room-depo'},
+  'Diğer':       {dot:'#ec4899', cls:'room-diger'},
+};
+
+const el = id => document.getElementById(id);
+const ts = () => {
+  const d=new Date();
+  return d.toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric'})
+    +' '+d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+};
+
+// ── TABS ──────────────────────────────────────────────────
+function switchTab(i){
+  currentTab=i;
+  ['s-home','s-add','s-items'].forEach((s,idx)=>{
+    el(s).classList.toggle('active',idx===i);
+  });
+  for(let j=0;j<3;j++) el('tb'+j).className='tabbar-btn'+(j===i?' active':'');
+  if(i===0) renderHome();
+  if(i===1 && !editKey) resetForm();
+  if(i===2) renderItems();
+}
+
+// ── FİREBASE DİNLE ────────────────────────────────────────
+function startListening(){
+  itemsRef.on('value', snap=>{
+    allItems = snap.val() || {};
+    el('topbar-sub').textContent = Object.keys(allItems).length + ' eşya kayıtlı';
+    if(currentTab===0) renderHome();
+    if(currentTab===2) renderItems();
+  });
+}
+
+// ── ANA SAYFA ─────────────────────────────────────────────
+function renderHome(){
+  const items = Object.values(allItems);
+  el('total-count').textContent = items.length;
+
+  if(items.length){
+    const last = items.sort((a,b)=>b.createdAt-a.createdAt)[0];
+    el('last-added').textContent = 'Son eklenen: '+last.name;
+  } else {
+    el('last-added').textContent = 'Henüz eşya eklenmedi';
+  }
+
+  // Oda özeti
+  const roomCounts = {};
+  items.forEach(item=>{
+    roomCounts[item.room] = (roomCounts[item.room]||0)+1;
+  });
+
+  const summaryEl = el('room-summary');
+  if(!Object.keys(roomCounts).length){
+    summaryEl.innerHTML='<div class="empty" style="grid-column:span 2;padding:16px 0">Henüz eşya yok.<br>Sağ üstten ekleyin!</div>';
+    return;
+  }
+
+  summaryEl.innerHTML = Object.entries(roomCounts)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([room,count])=>{
+      const rc = ROOM_COLORS[room]||{dot:'#aaa',cls:'room-diger'};
+      return `<div class="room-chip" onclick="filterByRoom('${room}')">
+        <div class="room-chip-dot" style="background:${rc.dot}"></div>
+        <div class="room-chip-name">${room}</div>
+        <div class="room-chip-count">${count}</div>
+      </div>`;
+    }).join('');
+}
+
+function filterByRoom(room){
+  switchTab(2);
+  el('room-filter').value = room;
+  renderItems();
+}
+
+// ── EŞYA LİSTESİ ──────────────────────────────────────────
+function renderItems(){
+  const q      = (el('search-input')?.value||'').toLowerCase().trim();
+  const rFilter = el('room-filter')?.value||'';
+
+  // filtre seçeneklerini güncelle
+  updateRoomFilter();
+
+  let items = Object.entries(allItems).map(([k,v])=>({...v,_key:k}));
+
+  if(q) items = items.filter(i=>
+    i.name.toLowerCase().includes(q) ||
+    (i.location||'').toLowerCase().includes(q) ||
+    (i.desc||'').toLowerCase().includes(q) ||
+    (i.room||'').toLowerCase().includes(q)
+  );
+  if(rFilter) items = items.filter(i=>i.room===rFilter);
+
+  items.sort((a,b)=>b.createdAt-a.createdAt);
+
+  const listEl = el('items-list');
+  if(!items.length){
+    listEl.innerHTML=`<div class="empty">${q||rFilter?'Arama sonucu bulunamadı 🔍':'Henüz eşya eklenmedi.<br>+ Ekle butonuna basın!'}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = items.map(item=>{
+    const rc = ROOM_COLORS[item.room]||{dot:'#aaa',cls:'room-diger'};
+    return `<div class="item-card" onclick="showDetail('${item._key}')">
+      <div class="item-icon" style="background:${rc.dot}22">${item.emoji||'📦'}</div>
+      <div style="flex:1;min-width:0">
+        <div class="item-name">${escHtml(item.name)}</div>
+        <span class="badge ${rc.cls}" style="margin-bottom:4px">${item.room}</span>
+        ${item.location?`<div style="font-size:12px;color:#555;margin-bottom:2px">📍 ${escHtml(item.location)}</div>`:''}
+        ${item.desc?`<div class="item-desc">${escHtml(item.desc)}</div>`:''}
+        <div class="item-meta">Ekleyen: ${escHtml(item.addedBy||'?')} · ${item.createdAtStr||''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateRoomFilter(){
+  const sel = el('room-filter');
+  if(!sel) return;
+  const rooms = [...new Set(Object.values(allItems).map(i=>i.room))].sort();
+  const cur   = sel.value;
+  sel.innerHTML = '<option value="">Tüm Odalar</option>'
+    + rooms.map(r=>`<option value="${r}" ${r===cur?'selected':''}>${r}</option>`).join('');
+}
+
+// ── DETAY MODALı ──────────────────────────────────────────
+function showDetail(key){
+  const item = allItems[key];
+  if(!item) return;
+  const rc = ROOM_COLORS[item.room]||{dot:'#aaa',cls:'room-diger'};
+
+  el('detail-content').innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="width:56px;height:56px;border-radius:14px;background:${rc.dot}22;display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0">${item.emoji||'📦'}</div>
+      <div>
+        <div style="font-size:19px;font-weight:800">${escHtml(item.name)}</div>
+        <span class="badge ${rc.cls}">${item.room}</span>
+      </div>
+    </div>
+    ${item.location?`
+    <div style="background:#f8f8f8;border-radius:10px;padding:12px;margin-bottom:10px">
+      <div style="font-size:11px;color:#aaa;font-weight:700;text-transform:uppercase;margin-bottom:4px">Tam Konum</div>
+      <div style="font-size:14px;font-weight:600">📍 ${escHtml(item.location)}</div>
+    </div>`:''}
+    ${item.desc?`
+    <div style="background:#f8f8f8;border-radius:10px;padding:12px;margin-bottom:10px">
+      <div style="font-size:11px;color:#aaa;font-weight:700;text-transform:uppercase;margin-bottom:4px">Açıklama</div>
+      <div style="font-size:14px;line-height:1.5">${escHtml(item.desc)}</div>
+    </div>`:''}
+    <div style="font-size:12px;color:#ccc;margin-bottom:16px">
+      Ekleyen: ${escHtml(item.addedBy||'?')} · ${item.createdAtStr||''}
+      ${item.updatedAtStr?'<br>Güncellendi: '+item.updatedAtStr:''}
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-dark btn-sm" onclick="editItem('${key}')" style="flex:1">✏️ Düzenle</button>
+      <button class="btn btn-red btn-sm" onclick="confirmDelete('${key}')" style="flex:1">🗑️ Sil</button>
+    </div>
+    <button class="btn btn-gray" onclick="closeDetail()" style="margin-top:8px">Kapat</button>`;
+
+  el('detail-modal').classList.add('open');
+}
+
+function closeDetail(){ el('detail-modal').classList.remove('open'); }
+
+// ── FORM ──────────────────────────────────────────────────
+function buildEmojiPicker(selected){
+  el('emoji-picker').innerHTML = EMOJIS.map(e=>`
+    <div onclick="selectEmoji('${e}')" style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;background:${e===selected?'#1a1a2e':'#f5f5f5'};transition:background .15s">${e}</div>
+  `).join('');
+}
+
+function selectEmoji(e){
+  el('f-emoji').value=e;
+  buildEmojiPicker(e);
+}
+
+function resetForm(){
+  editKey=null;
+  el('form-title').textContent='YENİ EŞYA EKLE';
+  el('f-name').value='';
+  el('f-room').value='';
+  el('f-location').value='';
+  el('f-desc').value='';
+  el('f-emoji').value='📦';
+  el('form-err').style.display='none';
+  el('save-btn').textContent='💾 Kaydet';
+  buildEmojiPicker('📦');
+}
+
+function cancelForm(){
+  editKey=null;
+  switchTab(currentTab===1?0:currentTab);
+}
+
+function editItem(key){
+  closeDetail();
+  const item=allItems[key];
+  if(!item) return;
+  editKey=key;
+  el('form-title').textContent='EŞYAYI DÜZENLE';
+  el('f-name').value=item.name||'';
+  el('f-room').value=item.room||'';
+  el('f-location').value=item.location||'';
+  el('f-desc').value=item.desc||'';
+  el('f-emoji').value=item.emoji||'📦';
+  el('form-err').style.display='none';
+  el('save-btn').textContent='💾 Güncelle';
+  buildEmojiPicker(item.emoji||'📦');
+  switchTab(1);
+}
+
+function saveItem(){
+  const name     = el('f-name').value.trim();
+  const room     = el('f-room').value;
+  const location = el('f-location').value.trim();
+  const desc     = el('f-desc').value.trim();
+  const emoji    = el('f-emoji').value||'📦';
+  const errEl    = el('form-err');
+
+  if(!name){ errEl.textContent='Eşya adı zorunludur.'; errEl.style.display='block'; return; }
+  if(!room){ errEl.textContent='Lütfen bir oda seçin.'; errEl.style.display='block'; return; }
+  errEl.style.display='none';
+
+  // Kim ekliyor? — basit: localStorage'da isim saklayalım
+  let addedBy = localStorage.getItem('esya_user');
+  if(!addedBy){
+    addedBy = prompt('Adınız nedir? (bir kez sorulur)','') || 'Bilinmiyor';
+    localStorage.setItem('esya_user', addedBy);
+  }
+
+  if(editKey){
+    // güncelle
+    const updates = {name,room,location,desc,emoji,updatedAtStr:ts(),updatedBy:addedBy};
+    itemsRef.child(editKey).update(updates).then(()=>{
+      editKey=null;
+      switchTab(2);
+    });
+  } else {
+    // yeni ekle
+    const data = {name,room,location,desc,emoji,addedBy,createdAt:Date.now(),createdAtStr:ts()};
+    itemsRef.push(data).then(()=>{
+      resetForm();
+      switchTab(2);
+    });
+  }
+}
+
+// ── SİL ───────────────────────────────────────────────────
+function confirmDelete(key){
+  closeDetail();
+  const item=allItems[key];
+  el('confirm-title').textContent=`"${item?.name}" silinsin mi?`;
+  el('confirm-msg').textContent='Bu işlem geri alınamaz.';
+  el('confirm-ok').onclick=()=>{ itemsRef.child(key).remove().then(closeConfirm); };
+  el('confirm-modal').classList.add('open');
+}
+function closeConfirm(){ el('confirm-modal').classList.remove('open'); }
+
+// ── YARDIMCI ──────────────────────────────────────────────
+function escHtml(str){
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── BOOT ──────────────────────────────────────────────────
+buildEmojiPicker('📦');
+startListening();
+</script>
+</body>
+</html>
